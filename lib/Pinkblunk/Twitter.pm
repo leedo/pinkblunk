@@ -41,12 +41,12 @@ sub post {
   my $title = $video->title;
   $title =~ s/\s*-[^-]*Video$//;
 
-  my $i = 0;
+  my $i = 1;
   for my $media_id (@medias) {
     my $t = $title;
 
     if (@medias > 1) {
-      $t .= sprintf " %s/%s %s", $i, scalar(@medias), $video->link;
+      $t .= sprintf " %s/%s %s", $i++, scalar(@medias), $video->link;
     }
     else {
       $t .= sprintf " %s", $video->link;
