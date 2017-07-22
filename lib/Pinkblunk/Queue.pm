@@ -1,5 +1,8 @@
 package Pinkblunk::Queue;
 
+use strict;
+use warnings;
+
 use Class::Tiny qw(), {
     redis => sub { Redis->new },
   };

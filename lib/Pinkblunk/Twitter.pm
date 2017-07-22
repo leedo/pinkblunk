@@ -1,5 +1,8 @@
 package Pinkblunk::Twitter;
 
+use strict;
+use warnings;
+
 use Pinkblunk::Debug;
 use Net::OAuth;
 use LWP::UserAgent;

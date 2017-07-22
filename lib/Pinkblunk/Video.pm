@@ -1,5 +1,8 @@
 package Pinkblunk::Video;
 
+use strict;
+use warnings;
+
 use Pinkblunk::Debug;
 use File::Temp qw(tempdir);
 use IPC::Open3 qw();
@@ -33,7 +36,7 @@ sub download {
   debug "downloading %s to %s", $self->url, $dir;
 
   my ($w, $r, $e, $pid);
-  my $e = Symbol::gensym;
+  $e = Symbol::gensym;
   my @cmd = qw(
     ffmpeg -i - -vcodec libx264 -r 30 -pix_fmt yuv420p -strict -2 -acodec aac -map 0 -segment_time 130 -reset_timestamps 1 -f segment output%03d.mp4
   );

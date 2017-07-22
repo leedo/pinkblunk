@@ -1,5 +1,8 @@
 package Pinkblunk::Debug;
 
+use strict;
+use warnings;
+
 use Exporter qw(import);
 
 our @EXPORT = qw(error debug info);

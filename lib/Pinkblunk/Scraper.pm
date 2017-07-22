@@ -1,5 +1,8 @@
 package Pinkblunk::Scraper;
 
+use strict;
+use warnings;
+
 use Pinkblunk::Debug;
 use Redis;
 use LWP::UserAgent;
