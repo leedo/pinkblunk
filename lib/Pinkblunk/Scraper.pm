@@ -1,4 +1,4 @@
-package Pinkblunk::Fetcher;
+package Pinkblunk::Scraper;
 
 use Pinkblunk::Debug;
 use Redis;

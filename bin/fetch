@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use Pinkblunk::Debug;
-use Pinkblunk::Fetcher;
+use Pinkblunk::Scraper;
 use Pinkblunk::Queue;
 use Pinkblunk::Video;
 use Pinkblunk::Twitter;
@@ -14,7 +14,7 @@ my $cred = do {
   decode_json join "", <$fh>;
 };
 
-my $fetcher = Pinkblunk::Fetcher->new(url => $feed);
+my $fetcher = Pinkblunk::Scraper->new(url => $feed);
 my $queue = Pinkblunk::Queue->new;
 my $twitter = Pinkblunk::Twitter->new( %$cred );
 
