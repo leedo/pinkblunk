@@ -22,6 +22,7 @@ sub scrape {
   my $content = shift;
 
   $self->{scraper} ||= scraper {
+    process "iframe", 'iframes[]', '@src';
     process ".video-container", 'videos[]' => scraper {
       process "video", id => '@data-videoid';
       process "video source", 'sources[]', {
@@ -62,8 +63,9 @@ sub fetch {
 
     $self->redis->set( $entry->id, time );
 
-    my $scrape = $self->scrape( $res->decoded_content );
-    my $videos = $scrape->{videos};
+    my $scrape  = $self->scrape( $res->decoded_content );
+    my $videos  = $scrape->{videos};
+    my $iframes = $scrape->{iframes};
 
     for my $video (@$videos) {
       my $id = $video->{id};
@@ -75,6 +77,18 @@ sub fetch {
       $self->redis->hset( $id, link    => encode utf8 => $entry->link  );
       $self->redis->hset( $id, url     => encode utf8 => $best->{url}  );
       $self->redis->hset( $id, quality => encode utf8 => $best->{q}    );
+      $self->redis->rpush( queue => $id );
+    }
+
+    for my $iframe (@$iframes) {
+      my ($id) = $iframe =~ m{^https?://(?:www\.)?youtube\.com/embed/([^/]+)}
+        or next;
+
+      debug "found youtube %s", $id;
+
+      $self->redis->hset( $id, title   => encode utf8 => $entry->title );
+      $self->redis->hset( $id, link    => encode utf8 => $entry->link  );
+      $self->redis->hset( $id, youtube => encode utf8 => "1" );
       $self->redis->rpush( queue => $id );
     }
   }

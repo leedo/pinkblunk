@@ -39,6 +39,30 @@ sub upload {
 sub post {
   my $self = shift;
   my $video = shift;
+  my @media = @_;
+
+  if (@media) {
+    $self->post_media($video, @media);
+  }
+  elsif ($video->youtube) {
+    $self->post_youtube($video);
+  }
+}
+
+sub post_youtube {
+  my $self = shift;
+  my $video = shift;
+
+  my $title = $video->title;
+  $title =~ s/\s*-[^-]*Video$//;
+  $title .= sprintf " https://www.youtube.com/watch?v=%s", $video->id;
+
+  $self->status($title);
+}
+
+sub post_media {
+  my $self = shift;
+  my $video = shift;
   my @medias = @_;
 
   my $title = $video->title;

@@ -9,7 +9,7 @@ use IPC::Open3 qw();
 use Encode;
 use Symbol qw();
 
-use Class::Tiny qw(id url link title quality), {
+use Class::Tiny qw(id url link title quality youtube), {
     redis => sub { Redis->new },
   };
 
@@ -19,7 +19,7 @@ sub lookup {
 
   my $self = $class->new( id => $id );
 
-  for my $field (qw(url link title quality)) {
+  for my $field (qw(url link title quality youtube)) {
     my $value = $self->redis->hget( $id, $field );
     if (defined $value) {
       $self->$field(decode utf8 => $value);
@@ -31,6 +31,9 @@ sub lookup {
 
 sub download {
   my $self = shift;
+
+  return if $self->youtube;
+
   my $dir  = tempdir();
 
   debug "downloading %s to %s", $self->url, $dir;
