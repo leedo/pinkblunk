@@ -14,12 +14,12 @@ my $cred = do {
   decode_json join "", <$fh>;
 };
 
-START:
 my $fetcher = Pinkblunk::Fetcher->new(url => $feed);
-$fetcher->fetch;
-
 my $queue = Pinkblunk::Queue->new;
 my $twitter = Pinkblunk::Twitter->new( %$cred );
+
+FETCH:
+$fetcher->fetch;
 
 while ( my $id = $queue->jobs ) {
   my $video = Pinkblunk::Video->lookup( $id );
@@ -39,4 +39,5 @@ while ( my $id = $queue->jobs ) {
 
 debug "upload queue empty, sleeping 15m";
 sleep 60 * 15;
-goto START;
+
+goto FETCH;
