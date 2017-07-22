@@ -9,17 +9,6 @@ use Class::Tiny qw( consumer_key consumer_secret access_token access_token_secre
     ua => sub  { LWP::UserAgent->new }
   };
 
-sub client {
-  my $self = shift;
-  $self->{client} ||= Net::OAuth->new(
-    $self->consumer_key,
-    $self->consumer_secret,
-    access_token        => $self->access_token,
-    access_token_secret => $self->access_token_secret,
-  );
-  $self->{client};
-}
-
 sub upload {
   my $self = shift;
   my $file = shift;
