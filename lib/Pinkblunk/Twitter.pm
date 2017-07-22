@@ -46,7 +46,7 @@ sub post {
     my $t = $title;
 
     if (@medias > 1) {
-      $t .= sprintf " %s/%s %s", $i++, scalar(@medias), $video->link;
+      $t .= sprintf " (%s/%s) %s", $i++, scalar(@medias), $video->link;
     }
     else {
       $t .= sprintf " %s", $video->link;
