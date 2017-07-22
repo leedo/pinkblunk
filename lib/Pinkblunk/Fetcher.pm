@@ -20,7 +20,7 @@ sub scrape {
 
   $self->{scraper} ||= scraper {
     process ".video-container", 'videos[]' => scraper {
-      process "video", id => '@data-videoid',
+      process "video", id => '@data-videoid';
       process "video source", 'sources[]', {
         q => '@data-quality',
         url => '@src',
@@ -33,7 +33,7 @@ sub scrape {
 
 sub fetch {
   my $self = shift;
-  debug "fetching RSS at %s", $self->url;
+  info "fetching RSS at %s", $self->url;
   my $res = $self->ua->get( $self->url );
 
   if (!$res->is_success) {

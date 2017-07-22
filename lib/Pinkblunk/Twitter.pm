@@ -77,7 +77,7 @@ sub status {
 
   if ($res->code != 200) {
     my $error = decode_json $res->content;
-    debug $res->status_line;
+    info "got %s", $res->status_line;
     error $error->{error};
   }
 }
@@ -121,7 +121,7 @@ sub upload_finalize {
 
   if ($res->code != 200) {
     my $error = decode_json $res->content;
-    debug $res->status_line;
+    info "got %s", $res->status_line;
     error $error->{error};
   }
 }
@@ -145,7 +145,7 @@ sub upload_status {
 
   if ($res->code != 200) {
     my $error = decode_json $res->content;
-    debug $res->status_line;
+    info "got %s", $res->status_line;
     error $error->{error};
   }
 
@@ -192,7 +192,7 @@ sub upload_append {
 
     if ($res->code != 204) {
       my $error = decode_json $res->content;
-      debug $res->status_line;
+      info "got %s", $res->status_line;
       error $error->{error};
     }
 
@@ -226,7 +226,7 @@ sub upload_init {
   
   if ($res->code != 202) {
     my $error = decode_json $res->content;
-    debug $res->status_line;
+    info "got %s", $res->status_line;
     error $error->{error};
   }
 

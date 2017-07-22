@@ -28,16 +28,16 @@ while ( my $id = $queue->jobs ) {
   my @medias;
   for my $file (@files) {
     push @medias, $twitter->upload($file);
-    debug "upload segment complete";
+    info "upload segment complete";
     unlink $file;
   }
 
   $twitter->post($video, @medias);
-  debug "post %s complete, sleeping 5m", $id;
+  info "post %s complete, sleeping 5m", $id;
   sleep 60 * 5;
 }
 
-debug "upload queue empty, sleeping 15m";
+info "upload queue empty, sleeping 15m";
 sleep 60 * 15;
 
 goto FETCH;
