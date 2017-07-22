@@ -36,7 +36,7 @@ sub fetch {
   info "fetching RSS at %s", $self->url;
   my $res = $self->ua->get( $self->url );
 
-  if (!$res->is_success) {
+  if ($res->code != 200) {
     error "failed to fetch feed: %s", $res->status_line;
   }
 
@@ -52,7 +52,7 @@ sub fetch {
     debug "fetching article %s", $entry->link;
     my $res = $self->ua->get( $entry->link );
 
-    if (!$res->is_success) {
+    if ($res->code != 200) {
       error "failed to fetch url %s: %s",
         $entry->link, $res->status_line;
     }
@@ -66,7 +66,7 @@ sub fetch {
       my $id = $video->{id};
       my ($best) = sort { $b->{q} <=> $a->{q} } @{ $video->{sources} };
 
-      debug "found video %s %s", $id, $best->{url};
+      debug "found video %s %s %s", $id, $best->{url}, $best->{q};
 
       $self->redis->hset( $id, title   => encode utf8 => $entry->title );
       $self->redis->hset( $id, link    => encode utf8 => $entry->link  );
