@@ -1,0 +1,42 @@
+#!/usr/bin/env perl
+
+use Pinkblunk::Debug;
+use Pinkblunk::Fetcher;
+use Pinkblunk::Queue;
+use Pinkblunk::Video;
+use Pinkblunk::Twitter;
+use JSON::XS;
+
+my $feed = "https://www.pinkbike.com/pinkbike_xml_feed.php";
+my $cred = do {
+  open my $fh, '<', '.twitter.json'
+    or die $!;
+  decode_json join "", <$fh>;
+};
+
+START:
+my $fetcher = Pinkblunk::Fetcher->new(url => $feed);
+$fetcher->fetch;
+
+my $queue = Pinkblunk::Queue->new;
+my $twitter = Pinkblunk::Twitter->new( %$cred );
+
+while ( my $id = $queue->jobs ) {
+  my $video = Pinkblunk::Video->lookup( $id );
+  my @files = $video->download;
+
+  my @medias;
+  for my $file (@files) {
+    push @medias, $twitter->upload($file);
+    debug "upload segment complete";
+    unlink $file;
+  }
+
+  $twitter->post($video, @medias);
+  debug "post %s complete, sleeping 5m", $id;
+  sleep 60 * 5;
+}
+
+debug "upload queue empty, sleeping 15m";
+sleep 60 * 15;
+goto START;
