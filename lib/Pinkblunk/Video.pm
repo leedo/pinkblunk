@@ -40,8 +40,9 @@ sub download {
 
   my ($w, $pid);
   my @cmd = qw(
-    ffmpeg -i - -vcodec libx264 -r 30 -pix_fmt yuv420p -strict -2 -acodec aac -map 0 -segment_time 130 -reset_timestamps 1 -f segment output%03d.mp4
+    ffmpeg -i - -vcodec libx264 -r 30 -pix_fmt yuv420p -strict -2 -acodec aac -map 0 -segment_time 130 -reset_timestamps 1 -f segment
   );
+  push @cmd, "$dir/output%03d.mp4";
 
   my $ua = LWP::UserAgent->new;
 
@@ -57,8 +58,8 @@ sub download {
       error "Failed to download %s: %s", $self->url, $res->status_line;
     }
 
-    chdir($dir);
     debug "spawning @cmd";
+
     $pid = IPC::Open3::open3($w, '>&STDERR', '>&STDERR', @cmd)
       or error "Failed to open ffmpeg: $!";
   });
