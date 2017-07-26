@@ -38,8 +38,7 @@ sub download {
 
   debug "downloading %s to %s", $self->url, $dir;
 
-  my ($w, $r, $e, $pid);
-  $e = Symbol::gensym;
+  my ($w, $pid);
   my @cmd = qw(
     ffmpeg -i - -vcodec libx264 -r 30 -pix_fmt yuv420p -strict -2 -acodec aac -map 0 -segment_time 130 -reset_timestamps 1 -f segment output%03d.mp4
   );
@@ -59,21 +58,15 @@ sub download {
     }
 
     chdir($dir);
-    $pid = IPC::Open3::open3($w, $r, $e, @cmd);
+    debug "spawning @cmd";
+    $pid = IPC::Open3::open3($w, '>&STDERR', '>&STDERR', @cmd)
+      or error "Failed to open ffmpeg: $!";
   });
 
   $ua->get( $self->url );
   close($w);
 
-  my $stderr = join "", <$e>;
-  my $stdout = join "", <$r>;
-  close($r);
-  close($e);
-
   waitpid($pid, 0);
-
-  debug $stderr if $stderr;
-  debug $stdout if $stdout;
 
   return glob "$dir/*.mp4";
 }

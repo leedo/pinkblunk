@@ -69,7 +69,11 @@ sub fetch {
 
     for my $video (@$videos) {
       my $id = $video->{id};
-      my ($best) = sort { $b->{q} <=> $a->{q} } @{ $video->{sources} };
+      my ($best) =
+        map $_->[1],
+        sort { $b->[0] <=> $a->[0] }
+        map { my ($q) = $_->{q} =~ /([0-9]+)/; [$q, $_] }
+        @{ $video->{sources} };
 
       debug "found video %s %s %s", $id, $best->{url}, $best->{q};
 
@@ -81,7 +85,7 @@ sub fetch {
     }
 
     for my $iframe (@$iframes) {
-      my ($id) = $iframe =~ m{^https?://(?:www\.)?youtube\.com/embed/([^/]+)}
+      my ($id) = $iframe =~ m{^https?://(?:www\.)?youtube\.com/embed/([^/?]+)}
         or next;
 
       debug "found youtube %s", $id;

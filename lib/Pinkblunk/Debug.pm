@@ -18,7 +18,13 @@ sub debug { _print(DEBUG => @_) }
 sub _print {
   my $level = shift;
   my $fmt   = shift;
-  warn sprintf "%s [$level] $fmt\n", ts(), @_;
+  my @args  = @_;
+  if (@args) {
+    warn sprintf "%s [$level] $fmt\n", ts(), @args;
+  }
+  else {
+    warn sprintf( "%s [$level]", ts() ) . " $fmt\n";
+  }
 }
 
 
