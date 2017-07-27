@@ -23,7 +23,7 @@ sub upload {
 
   my $status = $self->upload_status($media_id);
 
-  while ($status->{state} eq "in_progress") {
+  while ($status->{state} =~ /^(?:pending|in_progress)$/) {
     sleep $status->{check_after_secs};
     $status = $self->upload_status($media_id);
   }
