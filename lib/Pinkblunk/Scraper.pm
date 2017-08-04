@@ -48,10 +48,7 @@ sub fetch {
   my $feed = XML::Feed->parse(\$content);
 
   for my $entry ($feed->entries) {
-    if ($self->redis->exists( $entry->id )) {
-      debug "skipping %s", $entry->link;
-      next;
-    }
+    next if $self->redis->exists( $entry->id );
 
     debug "fetching article %s", $entry->link;
     my $res = $self->ua->get( $entry->link );
@@ -85,15 +82,25 @@ sub fetch {
     }
 
     for my $iframe (@$iframes) {
-      my ($id) = $iframe =~ m{^https?://(?:www\.)?youtube\.com/embed/([^/?]+)}
-        or next;
+      my ($id) = $iframe =~ m{^https?://(?:www\.)?youtube\.com/embed/([^/?]+)};
+      if ($id) {
+        debug "found youtube %s", $id;
+        $self->redis->hset( $id, title   => encode utf8 => $entry->title );
+        $self->redis->hset( $id, link    => encode utf8 => $entry->link  );
+        $self->redis->hset( $id, youtube => encode utf8 => "1" );
+        $self->redis->rpush( queue => $id );
+        next;
+      }
 
-      debug "found youtube %s", $id;
-
-      $self->redis->hset( $id, title   => encode utf8 => $entry->title );
-      $self->redis->hset( $id, link    => encode utf8 => $entry->link  );
-      $self->redis->hset( $id, youtube => encode utf8 => "1" );
-      $self->redis->rpush( queue => $id );
+      ($id) = $iframe =~ m{^https?://player\.vimeo\.com/video/([^/?]+)};
+      if ($id) {
+        debug "found vimeo %s", $id;
+        $self->redis->hset( $id, title => encode utf8 => $entry->title );
+        $self->redis->hset( $id, link  => encode utf8 => $entry->link  );
+        $self->redis->hset( $id, vimeo => encode utf8 => "1" );
+        $self->redis->rpush( queue => $id );
+        next;
+      }
     }
   }
 }

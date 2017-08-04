@@ -47,6 +47,20 @@ sub post {
   elsif ($video->youtube) {
     $self->post_youtube($video);
   }
+  elsif ($video->vimeo) {
+    $self->post_vimeo($video);
+  }
+}
+
+sub post_vimeo {
+  my $self = shift;
+  my $video = shift;
+
+  my $title = $video->title;
+  $title =~ s/\s*-[^-]*Video$//;
+  $title .= sprintf " https://vimeo.com/%s", $video->id;
+
+  $self->status($title);
 }
 
 sub post_youtube {
