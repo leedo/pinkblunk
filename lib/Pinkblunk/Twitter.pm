@@ -101,6 +101,7 @@ sub status {
   my $self = shift;
   my $title = shift;
   my $media_id = shift;
+  my $retries = shift || 0;
 
   my $req = $self->req(
     request_method => "POST",
@@ -115,6 +116,12 @@ sub status {
     $req->request_url,
     Content => $req->to_post_body
   );
+
+  if ($res->code == 500 && $retries < 3) {
+    info "got %s, retrying ($retries)", $res->status_line;
+    $self->status($title, $media_id, $retries + 1);
+    return;
+  }
 
   if ($res->code != 200) {
     my $error = decode_json $res->content;
@@ -200,6 +207,7 @@ sub upload_append {
   my $len  = shift;
   my $media_id = shift;
 
+  my $retries = 0;
   my $pos = 0;
   my $seg = 0;
 
@@ -213,6 +221,7 @@ sub upload_append {
     debug "read %s", length $chunk;
     debug "APPEND %s segment %s", $file, $seg;
 
+    RETRY:
     my $req = $self->req(
       request_method => "POST",
       request_url => 'https://upload.twitter.com/1.1/media/upload.json',
@@ -234,7 +243,14 @@ sub upload_append {
     if ($res->code != 204) {
       my $error = decode_json $res->content;
       info "got %s", $res->status_line;
-      error $error->{error};
+
+      if ($retries++ < 5) {
+        info "retrying (%s/5)", $retries;
+        sleep $retries * 3;
+        goto RETRY;
+      }
+
+      error "too many retries";
     }
 
     $pos = tell $fh;

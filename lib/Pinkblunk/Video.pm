@@ -41,7 +41,7 @@ sub download {
 
   my ($w, $pid);
   my @cmd = qw(
-    ffmpeg -i - -vcodec libx264 -r 30 -pix_fmt yuv420p -strict -2 -acodec aac -map 0 -segment_time 130 -reset_timestamps 1 -f segment
+    ffmpeg -hide_banner -loglevel error -i - -vcodec libx264 -r 30 -pix_fmt yuv420p -strict -2 -acodec aac -map 0 -segment_time 130 -reset_timestamps 1 -f segment
   );
   push @cmd, "$dir/output%03d.mp4";
 

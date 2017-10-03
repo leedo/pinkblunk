@@ -41,7 +41,8 @@ sub fetch {
   my $res = $self->ua->get( $self->url );
 
   if ($res->code != 200) {
-    error "failed to fetch feed: %s", $res->status_line;
+    debug "failed to fetch feed: %s", $res->status_line;
+    return;
   }
 
   my $content = $res->decoded_content;
@@ -54,8 +55,9 @@ sub fetch {
     my $res = $self->ua->get( $entry->link );
 
     if ($res->code != 200) {
-      error "failed to fetch url %s: %s",
+      debug "failed to fetch url %s: %s",
         $entry->link, $res->status_line;
+      next;
     }
 
     $self->redis->set( $entry->id, time );
