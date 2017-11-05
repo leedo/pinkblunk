@@ -101,8 +101,10 @@ sub status {
   my $self = shift;
   my $title = shift;
   my $media_id = shift;
-  my $retries = shift || 0;
 
+  my $retries = 0;
+
+  RETRY:
   my $req = $self->req(
     request_method => "POST",
     request_url => 'https://api.twitter.com/1.1/statuses/update.json',
@@ -117,16 +119,16 @@ sub status {
     Content => $req->to_post_body
   );
 
-  if ($res->code == 500 && $retries < 3) {
-    info "got %s, retrying ($retries)", $res->status_line;
-    $self->status($title, $media_id, $retries + 1);
-    return;
-  }
-
   if ($res->code != 200) {
-    my $error = decode_json $res->content;
-    info "got %s", $res->status_line;
-    error $error->{error};
+    info "got %s, %s", $res->status_line, $res->decoded_content;
+
+    if ($retries++ < 5) {
+      info "retrying (%s/5)", $retries;
+      sleep $retries * 3;
+      goto RETRY;
+    }
+
+    error "too many retries";
   }
 }
 
@@ -178,6 +180,9 @@ sub upload_status {
   my $self = shift;
   my $media_id = shift;
 
+  my $retries = 0;
+
+  RETRY:
   debug "STATUS %s", $media_id;
 
   my $req = $self->req(
@@ -192,9 +197,15 @@ sub upload_status {
   my $res = $self->ua->get($req->to_url);
 
   if ($res->code != 200) {
-    my $error = decode_json $res->content;
     info "got %s", $res->status_line;
-    error $error->{error};
+
+    if ($retries++ < 5) {
+      info "retrying (%s/5)", $retries;
+      sleep $retries * 3;
+      goto RETRY;
+    }
+
+    error $res->decoded_content;
   }
 
   my $data = decode_json $res->content;
@@ -215,10 +226,7 @@ sub upload_append {
 
   debug "total length $len";
   while ( $pos < $len ) {
-    debug "reading from pos $pos";
     read($fh, my $chunk, 4 * 1024 * 1024);
-
-    debug "read %s", length $chunk;
     debug "APPEND %s segment %s", $file, $seg;
 
     RETRY:
@@ -241,8 +249,7 @@ sub upload_append {
     );
 
     if ($res->code != 204) {
-      my $error = decode_json $res->content;
-      info "got %s", $res->status_line;
+      info "got %s, %s", $res->status_line, $res->decoded_content;
 
       if ($retries++ < 5) {
         info "retrying (%s/5)", $retries;
