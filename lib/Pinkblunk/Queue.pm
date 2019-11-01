@@ -12,4 +12,9 @@ sub jobs {
   $self->redis->lpop("queue");
 }
 
+sub fail {
+  my ($self, $id) = @_;
+  $self->redis->rpush("queue", $id);
+}
+
 1;

@@ -10,6 +10,7 @@ use XML::Feed;
 use Web::Scraper;
 use Encode;
 use List::Util qw(first);
+use HTML::Entities qw(decode_entities);
 
 use Class::Tiny qw(url),
   {
@@ -65,6 +66,7 @@ sub fetch {
     my $scrape  = $self->scrape( $res->decoded_content );
     my $videos  = $scrape->{videos};
     my $iframes = $scrape->{iframes};
+    my $title   = decode_entities $entry->title;
 
     for my $video (@$videos) {
       my $id = $video->{id};
@@ -76,7 +78,7 @@ sub fetch {
 
       debug "found video %s %s %s", $id, $best->{url}, $best->{q};
 
-      $self->redis->hset( $id, title   => encode utf8 => $entry->title );
+      $self->redis->hset( $id, title   => encode utf8 => $title );
       $self->redis->hset( $id, link    => encode utf8 => $entry->link  );
       $self->redis->hset( $id, url     => encode utf8 => $best->{url}  );
       $self->redis->hset( $id, quality => encode utf8 => $best->{q}    );
@@ -87,7 +89,7 @@ sub fetch {
       my ($id) = $iframe =~ m{^https?://(?:www\.)?youtube\.com/embed/([^/?]+)};
       if ($id) {
         debug "found youtube %s", $id;
-        $self->redis->hset( $id, title   => encode utf8 => $entry->title );
+        $self->redis->hset( $id, title   => encode utf8 => $title );
         $self->redis->hset( $id, link    => encode utf8 => $entry->link  );
         $self->redis->hset( $id, youtube => encode utf8 => "1" );
         $self->redis->rpush( queue => $id );
@@ -97,7 +99,7 @@ sub fetch {
       ($id) = $iframe =~ m{^https?://player\.vimeo\.com/video/([^/?]+)};
       if ($id) {
         debug "found vimeo %s", $id;
-        $self->redis->hset( $id, title => encode utf8 => $entry->title );
+        $self->redis->hset( $id, title => encode utf8 => $title );
         $self->redis->hset( $id, link  => encode utf8 => $entry->link  );
         $self->redis->hset( $id, vimeo => encode utf8 => "1" );
         $self->redis->rpush( queue => $id );

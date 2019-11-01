@@ -24,18 +24,23 @@ my $twitter = Pinkblunk::Twitter->new( %$cred );
 FETCH:
 $fetcher->fetch;
 
+JOB:
 while ( my $id = $queue->jobs ) {
   my $video = Pinkblunk::Video->lookup( $id );
   my @files = $video->download;
 
   my @medias;
   for my $file (@files) {
-    push @medias, $twitter->upload($file);
+    my $upload = $twitter->upload($file);
+    next JOB unless $upload;
+    push @medias, $upload;
     info "upload segment complete";
     unlink $file;
   }
 
-  $twitter->post($video, @medias);
+  $twitter->post($video, @medias)
+    or $queue->fail($id);
+
   info "post %s complete, sleeping 5m", $id;
   sleep 60 * 5;
 }

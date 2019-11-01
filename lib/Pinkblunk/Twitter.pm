@@ -18,8 +18,10 @@ sub upload {
   my $len  = (stat($file))[7];
 
   my $media_id = $self->upload_init($len);
-  $self->upload_append($file, $len, $media_id);
-  $self->upload_finalize($media_id);
+  $self->upload_append($file, $len, $media_id)
+    or return;
+  $self->upload_finalize($media_id)
+    or return;
 
   my $status = $self->upload_status($media_id);
 
@@ -30,7 +32,7 @@ sub upload {
 
   if ($status->{state} ne "succeeded") {
     debug encode_json $status;
-    error "upload failed %s", $file;
+    return;
   }
 
   $media_id;
@@ -42,13 +44,13 @@ sub post {
   my @media = @_;
 
   if (@media) {
-    $self->post_media($video, @media);
+    return $self->post_media($video, @media);
   }
   elsif ($video->youtube) {
-    $self->post_youtube($video);
+    return $self->post_youtube($video);
   }
   elsif ($video->vimeo) {
-    $self->post_vimeo($video);
+    return $self->post_vimeo($video);
   }
 }
 
@@ -93,8 +95,10 @@ sub post_media {
       $t .= sprintf " %s", $video->link;
     }
 
-    $self->status( $t, $media_id );
+    $self->status( $t, $media_id )
+      or return 0;
   }
+  return 1;
 }
 
 sub status {
@@ -122,14 +126,23 @@ sub status {
   if ($res->code != 200) {
     info "got %s, %s", $res->status_line, $res->decoded_content;
 
+    if ($res->header("content-type") =~ m{application/json}) {
+      my $data = eval { decode_json $res->content } || {};
+      if (defined $data->{errors}) {
+        # segment too short
+        return 1 if grep { $_->{code} == 324 } @{ $data->{errors} };
+      }
+    }
+
     if ($retries++ < 5) {
       info "retrying (%s/5)", $retries;
       sleep $retries * 3;
       goto RETRY;
     }
 
-    error "too many retries";
+    return 0;
   }
+  return 1;
 }
 
 sub req {
@@ -172,8 +185,10 @@ sub upload_finalize {
   if ($res->code != 200) {
     my $error = decode_json $res->content;
     info "got %s", $res->status_line;
-    error $error->{error};
+    return 0;
   }
+
+  return 1;
 }
 
 sub upload_status {
@@ -257,12 +272,15 @@ sub upload_append {
         goto RETRY;
       }
 
-      error "too many retries";
+      debug "too many retries";
+      return 0;
     }
 
     $pos = tell $fh;
     $seg++;
   }
+
+  return 1;
 }
 
 
